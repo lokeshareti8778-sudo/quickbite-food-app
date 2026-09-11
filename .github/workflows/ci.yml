@@ -44,4 +44,4 @@ jobs:
         with:
           name: azure-function-package
           path: function-app/target/azure-functions/food-ordering-function
-          if-no-files-found: error
+          if-no-files-found: error 
