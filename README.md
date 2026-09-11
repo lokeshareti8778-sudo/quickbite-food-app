@@ -81,7 +81,11 @@ Set a deployed Function URL before starting Spring Boot:
 set FUNCTION_APP_URL=https://<function-app>.azurewebsites.net/api/process-order
 ```
 
-For Azure Function auth, include the function key in the URL as a protected environment value in production. Do not commit it.
+The current Function trigger is anonymous, so `FUNCTION_APP_KEY` can remain empty. If the trigger is changed to function-level authorization, set the key separately; Spring Boot appends it as the protected `code` query parameter without storing it in source control:
+
+```bash
+set FUNCTION_APP_KEY=<function-key>
+```
 
 ## REST APIs
 
@@ -115,7 +119,7 @@ Content-Type: application/json
 Get a previously processed order:
 
 ```http
-GET http://localhost:8080/api/orders/QB-10001
+GET http://localhost:8080/api/orders/ORD-10001
 ```
 
 The Spring Boot service calculates the menu total, sends the order payload to the Function, stores the returned response in its in-memory order store, and returns the Function's order ID and status. The Function validates the request, generates the unique ID, and returns `CONFIRMED`.
@@ -142,7 +146,8 @@ Create these resources in one resource group:
 2. An Azure Storage account for Functions.
 3. An Azure Function App using the Java 17 runtime on Linux.
 4. A Function App application setting named `FUNCTIONS_WORKER_RUNTIME=java`.
-5. An App Service application setting named `FUNCTION_APP_URL` containing the Function endpoint.
+5. An App Service application setting named `FUNCTION_APP_URL` containing `https://<function-app>.azurewebsites.net/api/process-order`.
+6. An optional App Service application setting named `FUNCTION_APP_KEY` containing the Function key when authorization is enabled.
 
 The Function App Maven plugin contains a sample `food-ordering-rg` and `eastus` configuration for interview/demo use. The GitHub Action deploys to the already-created resources named by secrets.
 
@@ -155,7 +160,7 @@ Create these repository or production-environment secrets:
 - `AZURE_WEBAPP_NAME`: Azure App Service name.
 - `AZURE_FUNCTIONAPP_NAME`: Azure Function App name.
 
-Never commit credentials, function keys, passwords, or tokens. Add `FUNCTION_APP_URL` to the App Service in Azure configuration rather than source control.
+Never commit credentials, function keys, passwords, or tokens. Add `FUNCTION_APP_URL` and, when needed, `FUNCTION_APP_KEY` to App Service configuration rather than source control.
 
 ## CI and CD
 

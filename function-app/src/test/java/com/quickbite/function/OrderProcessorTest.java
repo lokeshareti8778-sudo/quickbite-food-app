@@ -12,8 +12,9 @@ class OrderProcessorTest {
     @Test
     void confirmsAValidOrder() throws Exception {
         var response = processor.process("{\"customerName\":\"Alex\",\"items\":[{\"foodId\":1}]} ");
+        assertEquals("ORD-10001", response.get("orderId"));
         assertEquals("CONFIRMED", response.get("status"));
-        assertEquals("Your order has been placed successfully", response.get("message"));
+        assertEquals("Order placed successfully", response.get("message"));
     }
 
     @Test
