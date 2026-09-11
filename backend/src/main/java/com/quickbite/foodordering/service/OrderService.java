@@ -23,87 +23,216 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class OrderService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(OrderService.class);
+
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(OrderService.class);
+
     private static final String STATUS_FIELD = "status";
 
     private final FoodService foodService;
     private final RestClient restClient = RestClient.create();
     private final URI functionUri;
-    private final Map<String, OrderResponse> orders = new ConcurrentHashMap<>();
+    private final Map<String, OrderResponse> orders =
+            new ConcurrentHashMap<>();
 
-    public OrderService(FoodService foodService,
-                        @Value("${food-ordering.function-url:http://localhost:7071/api/process-order}") String functionUrl,
-                        @Value("${food-ordering.function-key:}") String functionKey) {
+    public OrderService(
+            FoodService foodService,
+            @Value("${food-ordering.function-url:http://localhost:7071/api/process-order}")
+            String functionUrl,
+            @Value("${food-ordering.function-key:}")
+            String functionKey) {
+
         this.foodService = foodService;
         this.functionUri = buildFunctionUri(functionUrl, functionKey);
-        LOGGER.info("Order processor configured at {}", functionUri.getScheme() + "://" + functionUri.getAuthority() + functionUri.getPath());
+
+        LOGGER.info(
+                "Order processor configured at {}",
+                functionUri.getScheme()
+                        + "://"
+                        + functionUri.getAuthority()
+                        + functionUri.getPath()
+        );
     }
 
     public OrderResponse placeOrder(CreateOrderRequest request) {
-        List<OrderItemResponse> items = request.items().stream().map(item -> {
-            FoodItem food = foodService.getFood(item.foodId());
-            BigDecimal lineTotal = food.price().multiply(BigDecimal.valueOf(item.quantity()));
-            return new OrderItemResponse(food.id(), food.name(), item.quantity(), food.price(), lineTotal);
-        }).toList();
-        BigDecimal total = items.stream().map(OrderItemResponse::lineTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        List<OrderItemResponse> items = request.items()
+                .stream()
+                .map(item -> {
+
+                    FoodItem food = foodService.getFood(item.foodId());
+
+                    BigDecimal lineTotal =
+                            food.price()
+                                    .multiply(
+                                            BigDecimal.valueOf(item.quantity())
+                                    );
+
+                    return new OrderItemResponse(
+                            food.id(),
+                            food.name(),
+                            item.quantity(),
+                            food.price(),
+                            lineTotal
+                    );
+                })
+                .toList();
+
+        BigDecimal total = items.stream()
+                .map(OrderItemResponse::lineTotal)
+                .reduce(
+                        BigDecimal.ZERO,
+                        BigDecimal::add
+                );
+
+        /*
+         * Payload sent from Spring Boot
+         * to Azure Function.
+         */
         Map<String, Object> functionRequest = Map.of(
                 "customerName", request.customerName(),
                 "email", request.email(),
                 "phone", request.phone(),
                 "address", request.address(),
                 "items", items,
-                "total", total
+                "totalAmount", total
         );
+
         Map<?, ?> functionResponse;
+
         try {
-            functionResponse = restClient.post().uri(functionUri).contentType(MediaType.APPLICATION_JSON)
-                    .body(functionRequest).retrieve().body(Map.class);
+
+            functionResponse = restClient.post()
+                    .uri(functionUri)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(functionRequest)
+                    .retrieve()
+                    .body(Map.class);
+
         } catch (RestClientResponseException exception) {
-            LOGGER.error("Order processor returned HTTP {}: {}", exception.getStatusCode().value(), exception.getResponseBodyAsString());
-            throw new IllegalStateException("Order processor rejected the order", exception);
+
+            LOGGER.error(
+                    "Order processor returned HTTP {}: {}",
+                    exception.getStatusCode().value(),
+                    exception.getResponseBodyAsString()
+            );
+
+            throw new IllegalStateException(
+                    "Order processor rejected the order",
+                    exception
+            );
+
         } catch (RestClientException exception) {
-            LOGGER.error("Could not reach order processor at {}", functionUri, exception);
-            throw new IllegalStateException("Order processor is unavailable", exception);
+
+            LOGGER.error(
+                    "Could not reach order processor at {}",
+                    functionUri,
+                    exception
+            );
+
+            throw new IllegalStateException(
+                    "Order processor is unavailable",
+                    exception
+            );
         }
 
-        if (functionResponse == null || functionResponse.get("orderId") == null
-                || functionResponse.get(STATUS_FIELD) == null || functionResponse.get("message") == null) {
-            LOGGER.error("Order processor returned an incomplete response: {}", functionResponse);
-            throw new IllegalStateException("Order processor returned an invalid response");
+        /*
+         * Validate Function response.
+         */
+        if (functionResponse == null
+                || functionResponse.get("orderId") == null
+                || functionResponse.get(STATUS_FIELD) == null
+                || functionResponse.get("message") == null) {
+
+            LOGGER.error(
+                    "Order processor returned an incomplete response: {}",
+                    functionResponse
+            );
+
+            throw new IllegalStateException(
+                    "Order processor returned an invalid response"
+            );
         }
 
         final OrderStatus status;
+
         try {
-            status = OrderStatus.valueOf(String.valueOf(functionResponse.get(STATUS_FIELD)));
+
+            status = OrderStatus.valueOf(
+                    String.valueOf(
+                            functionResponse.get(STATUS_FIELD)
+                    )
+            );
+
         } catch (IllegalArgumentException exception) {
-            LOGGER.error("Order processor returned an unknown status: {}", functionResponse.get(STATUS_FIELD));
-            throw new IllegalStateException("Order processor returned an invalid status", exception);
+
+            LOGGER.error(
+                    "Order processor returned an unknown status: {}",
+                    functionResponse.get(STATUS_FIELD)
+            );
+
+            throw new IllegalStateException(
+                    "Order processor returned an invalid status",
+                    exception
+            );
         }
 
         OrderResponse response = new OrderResponse(
-                String.valueOf(functionResponse.get("orderId")), request.customerName(), request.email(),
-                request.phone(), request.address(), items, total,
+                String.valueOf(
+                        functionResponse.get("orderId")
+                ),
+                request.customerName(),
+                request.email(),
+                request.phone(),
+                request.address(),
+                items,
+                total,
                 status,
-                String.valueOf(functionResponse.get("message"))
+                String.valueOf(
+                        functionResponse.get("message")
+                )
         );
-        orders.put(response.orderId(), response);
+
+        orders.put(
+                response.orderId(),
+                response
+        );
+
         return response;
     }
 
     public OrderResponse findOrder(String orderId) {
+
         OrderResponse response = orders.get(orderId);
+
         if (response == null) {
-            throw new IllegalArgumentException("Order not found: " + orderId);
+
+            throw new IllegalArgumentException(
+                    "Order not found: " + orderId
+            );
         }
+
         return response;
     }
 
-    private URI buildFunctionUri(String functionUrl, String functionKey) {
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(functionUrl);
+    private URI buildFunctionUri(
+            String functionUrl,
+            String functionKey) {
+
+        UriComponentsBuilder builder =
+                UriComponentsBuilder.fromUriString(functionUrl);
+
         if (functionKey != null && !functionKey.isBlank()) {
-            builder.queryParam("code", functionKey);
+
+            builder.queryParam(
+                    "code",
+                    functionKey
+            );
         }
-        return builder.build().encode().toUri();
+
+        return builder
+                .build()
+                .encode()
+                .toUri();
     }
 }
