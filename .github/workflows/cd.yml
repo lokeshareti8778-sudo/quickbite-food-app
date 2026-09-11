@@ -53,7 +53,7 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
-          package: deployment/backend/food-ordering-backend.jar
+          package: deployment/backend/food-ordering-backend.jar 
 
       - name: Deploy Java Function to Azure Function App
         uses: Azure/functions-action@v1
