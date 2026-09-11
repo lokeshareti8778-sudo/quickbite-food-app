@@ -32,10 +32,11 @@ public class OrderService {
     private static final String STATUS_FIELD = "status";
 
     private final FoodService foodService;
-        private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
     private final RestClient restClient = RestClient.create();
     private final URI functionUri;
-        private final String functionUrlForLogging;
+    private final String functionUrlForLogging;
+
     private final Map<String, OrderResponse> orders =
             new ConcurrentHashMap<>();
 
@@ -49,11 +50,17 @@ public class OrderService {
 
         this.foodService = foodService;
         this.objectMapper = objectMapper;
-        this.functionUri = buildFunctionUri(functionUrl, functionKey);
-        this.functionUrlForLogging = functionUri.getScheme()
-                + "://"
-                + functionUri.getAuthority()
-                + functionUri.getPath();
+
+        this.functionUri = buildFunctionUri(
+                functionUrl,
+                functionKey
+        );
+
+        this.functionUrlForLogging =
+                functionUri.getScheme()
+                        + "://"
+                        + functionUri.getAuthority()
+                        + functionUri.getPath();
 
         LOGGER.info(
                 "Order processor configured at {}",
@@ -67,12 +74,15 @@ public class OrderService {
                 .stream()
                 .map(item -> {
 
-                    FoodItem food = foodService.getFood(item.foodId());
+                    FoodItem food =
+                            foodService.getFood(item.foodId());
 
                     BigDecimal lineTotal =
                             food.price()
                                     .multiply(
-                                            BigDecimal.valueOf(item.quantity())
+                                            BigDecimal.valueOf(
+                                                    item.quantity()
+                                            )
                                     );
 
                     return new OrderItemResponse(
@@ -85,16 +95,16 @@ public class OrderService {
                 })
                 .toList();
 
-        BigDecimal total = items.stream()
-                .map(OrderItemResponse::lineTotal)
-                .reduce(
-                        BigDecimal.ZERO,
-                        BigDecimal::add
-                );
+        BigDecimal total =
+                items.stream()
+                        .map(OrderItemResponse::lineTotal)
+                        .reduce(
+                                BigDecimal.ZERO,
+                                BigDecimal::add
+                        );
 
         /*
-         * Payload sent from Spring Boot
-         * to Azure Function.
+         * Create request payload for Azure Function.
          */
         Map<String, Object> functionRequest = Map.of(
                 "customerName", request.customerName(),
@@ -104,23 +114,43 @@ public class OrderService {
                 "items", items,
                 "totalAmount", total
         );
+
+        /*
+         * Convert the request to JSON string.
+         */
         final String requestPayload;
+
         try {
-            requestPayload = objectMapper.writeValueAsString(functionRequest);
+
+            requestPayload =
+                    objectMapper.writeValueAsString(
+                            functionRequest
+                    );
+
         } catch (JsonProcessingException exception) {
-            throw new IllegalStateException("Could not serialize order for processing", exception);
+
+            throw new IllegalStateException(
+                    "Could not serialize order for processing",
+                    exception
+            );
         }
 
         Map<?, ?> functionResponse;
 
         try {
 
-            functionResponse = restClient.post()
-                    .uri(functionUri)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(functionRequest)
-                    .retrieve()
-                    .body(Map.class);
+            /*
+             * Send the serialized JSON string to Azure Function.
+             */
+            functionResponse =
+                    restClient.post()
+                            .uri(functionUri)
+                            .contentType(
+                                    MediaType.APPLICATION_JSON
+                            )
+                            .body(requestPayload)
+                            .retrieve()
+                            .body(Map.class);
 
         } catch (RestClientResponseException exception) {
 
@@ -169,15 +199,21 @@ public class OrderService {
             );
         }
 
+        /*
+         * Convert Function status to OrderStatus enum.
+         */
         final OrderStatus status;
 
         try {
 
-            status = OrderStatus.valueOf(
-                    String.valueOf(
-                            functionResponse.get(STATUS_FIELD)
-                    )
-            );
+            status =
+                    OrderStatus.valueOf(
+                            String.valueOf(
+                                    functionResponse.get(
+                                            STATUS_FIELD
+                                    )
+                            )
+                    );
 
         } catch (IllegalArgumentException exception) {
 
@@ -192,22 +228,33 @@ public class OrderService {
             );
         }
 
-        OrderResponse response = new OrderResponse(
-                String.valueOf(
-                        functionResponse.get("orderId")
-                ),
-                request.customerName(),
-                request.email(),
-                request.phone(),
-                request.address(),
-                items,
-                total,
-                status,
-                String.valueOf(
-                        functionResponse.get("message")
-                )
-        );
+        /*
+         * Create final order response.
+         */
+        OrderResponse response =
+                new OrderResponse(
+                        String.valueOf(
+                                functionResponse.get(
+                                        "orderId"
+                                )
+                        ),
+                        request.customerName(),
+                        request.email(),
+                        request.phone(),
+                        request.address(),
+                        items,
+                        total,
+                        status,
+                        String.valueOf(
+                                functionResponse.get(
+                                        "message"
+                                )
+                        )
+                );
 
+        /*
+         * Store order in memory.
+         */
         orders.put(
                 response.orderId(),
                 response
@@ -218,7 +265,8 @@ public class OrderService {
 
     public OrderResponse findOrder(String orderId) {
 
-        OrderResponse response = orders.get(orderId);
+        OrderResponse response =
+                orders.get(orderId);
 
         if (response == null) {
 
@@ -235,9 +283,12 @@ public class OrderService {
             String functionKey) {
 
         UriComponentsBuilder builder =
-                UriComponentsBuilder.fromUriString(functionUrl);
+                UriComponentsBuilder.fromUriString(
+                        functionUrl
+                );
 
-        if (functionKey != null && !functionKey.isBlank()) {
+        if (functionKey != null
+                && !functionKey.isBlank()) {
 
             builder.queryParam(
                     "code",
