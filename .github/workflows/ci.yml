@@ -30,7 +30,7 @@ jobs:
 
       - name: Build and test Java Function App
         working-directory: function-app
-        run: mvn --batch-mode clean test package
+        run: bash ./mvnw --batch-mode clean test package
 
       - name: Upload Spring Boot artifact
         uses: actions/upload-artifact@v4
