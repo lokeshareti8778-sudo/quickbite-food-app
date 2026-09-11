@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  checks: write
 
 jobs:
   build-and-test:
@@ -29,8 +30,37 @@ jobs:
         run: mvn --batch-mode --update-snapshots clean test package
 
       - name: Build and test Java Function App
+        if: ${{ !cancelled() }}
         working-directory: function-app
         run: bash ./mvnw --batch-mode clean test package
+
+      - name: Publish Spring Boot test report
+        if: ${{ !cancelled() }}
+        uses: dorny/test-reporter@v2
+        with:
+          name: Spring Boot tests
+          path: backend/target/surefire-reports/TEST-*.xml
+          reporter: java-junit
+          use-actions-summary: 'true'
+
+      - name: Publish Function App test report
+        if: ${{ !cancelled() }}
+        uses: dorny/test-reporter@v2
+        with:
+          name: Azure Function tests
+          path: function-app/target/surefire-reports/TEST-*.xml
+          reporter: java-junit
+          use-actions-summary: 'true'
+
+      - name: Upload raw JUnit test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-test-results
+          path: |
+            backend/target/surefire-reports/
+            function-app/target/surefire-reports/
+          if-no-files-found: warn
 
       - name: Upload Spring Boot artifact
         uses: actions/upload-artifact@v4
