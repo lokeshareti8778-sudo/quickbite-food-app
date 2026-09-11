@@ -2,49 +2,61 @@ name: CD
 
 on:
   workflow_run:
-    workflows: [CI]
-    types: [completed]
+    workflows: ["CI"]
+    types:
+      - completed
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: >
+      ${{ github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.head_branch == 'main' }}
+
     runs-on: ubuntu-latest
+
     environment: production
-    env:
-      AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+
     steps:
-      - name: Checkout tested commit
-        uses: actions/checkout@v4
+      - name: Download Spring Boot artifact
+        uses: actions/download-artifact@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-      - name: Set up Java 17
-        uses: actions/setup-java@v4
+          name: spring-boot-jar
+          path: deployment/backend
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Download Azure Function artifact
+        uses: actions/download-artifact@v4
         with:
-          distribution: temurin
-          java-version: '17'
-          cache: maven
-      - name: Rebuild Spring Boot deployment package
-        working-directory: backend
-        run: mvn --batch-mode clean package -DskipTests
-      - name: Rebuild Function deployment package
-        working-directory: function-app
-        run: mvn --batch-mode clean package -DskipTests
+          name: azure-function-package
+          path: deployment/function-app
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
       - name: Log in to Azure
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Verify Azure resource group
-        run: az group show --name "$AZURE_RESOURCE_GROUP" --only-show-errors --output none
+        run: |
+          az group show \
+            --name "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --only-show-errors \
+            --output none
+
       - name: Deploy Spring Boot to Azure App Service
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
-          package: backend/target/food-ordering-backend.jar
+          package: deployment/backend/food-ordering-backend.jar
+
       - name: Deploy Java Function to Azure Function App
         uses: Azure/functions-action@v1
         with:
           app-name: ${{ secrets.AZURE_FUNCTIONAPP_NAME }}
-          package: function-app/target/azure-functions/food-ordering-function
+          package: deployment/function-app
