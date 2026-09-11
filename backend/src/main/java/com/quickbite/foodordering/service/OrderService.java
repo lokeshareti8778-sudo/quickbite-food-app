@@ -1,5 +1,7 @@
 package com.quickbite.foodordering.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickbite.foodordering.dto.CreateOrderRequest;
 import com.quickbite.foodordering.dto.OrderItemResponse;
 import com.quickbite.foodordering.dto.OrderResponse;
@@ -30,27 +32,32 @@ public class OrderService {
     private static final String STATUS_FIELD = "status";
 
     private final FoodService foodService;
+        private final ObjectMapper objectMapper;
     private final RestClient restClient = RestClient.create();
     private final URI functionUri;
+        private final String functionUrlForLogging;
     private final Map<String, OrderResponse> orders =
             new ConcurrentHashMap<>();
 
     public OrderService(
             FoodService foodService,
+            ObjectMapper objectMapper,
             @Value("${food-ordering.function-url:http://localhost:7071/api/process-order}")
             String functionUrl,
             @Value("${food-ordering.function-key:}")
             String functionKey) {
 
         this.foodService = foodService;
+        this.objectMapper = objectMapper;
         this.functionUri = buildFunctionUri(functionUrl, functionKey);
+        this.functionUrlForLogging = functionUri.getScheme()
+                + "://"
+                + functionUri.getAuthority()
+                + functionUri.getPath();
 
         LOGGER.info(
                 "Order processor configured at {}",
-                functionUri.getScheme()
-                        + "://"
-                        + functionUri.getAuthority()
-                        + functionUri.getPath()
+                functionUrlForLogging
         );
     }
 
@@ -97,6 +104,12 @@ public class OrderService {
                 "items", items,
                 "totalAmount", total
         );
+        final String requestPayload;
+        try {
+            requestPayload = objectMapper.writeValueAsString(functionRequest);
+        } catch (JsonProcessingException exception) {
+            throw new IllegalStateException("Could not serialize order for processing", exception);
+        }
 
         Map<?, ?> functionResponse;
 
@@ -112,9 +125,11 @@ public class OrderService {
         } catch (RestClientResponseException exception) {
 
             LOGGER.error(
-                    "Order processor returned HTTP {}: {}",
+                    "Order processor rejected order. URL: {} | HTTP status: {} | Response body: {} | Request payload: {}",
+                    functionUrlForLogging,
                     exception.getStatusCode().value(),
-                    exception.getResponseBodyAsString()
+                    exception.getResponseBodyAsString(),
+                    requestPayload
             );
 
             throw new IllegalStateException(
@@ -126,7 +141,7 @@ public class OrderService {
 
             LOGGER.error(
                     "Could not reach order processor at {}",
-                    functionUri,
+                    functionUrlForLogging,
                     exception
             );
 
