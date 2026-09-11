@@ -75,10 +75,14 @@ Install Azure Functions Core Tools if you want to run the Function locally. Git 
 
 4. Open `frontend/index.html` with a static server extension, or serve the folder with any static file server. The page expects the API at `http://localhost:8080`.
 
-Set a deployed Function URL before starting Spring Boot:
+Set the Function URL before starting Spring Boot. Azure production defaults to the deployed Function App URL below, while local development should override it:
 
 ```bash
-set FUNCTION_APP_URL=https://<function-app>.azurewebsites.net/api/process-order
+# Local Windows development
+set FUNCTION_APP_URL=http://localhost:7071/api/process-order
+
+# Azure App Service application setting
+FUNCTION_APP_URL=https://food-order-function.azurewebsites.net/api/process-order
 ```
 
 The current Function trigger is anonymous, so `FUNCTION_APP_KEY` can remain empty. If the trigger is changed to function-level authorization, set the key separately; Spring Boot appends it as the protected `code` query parameter without storing it in source control:
@@ -136,7 +140,7 @@ mvn clean test
 mvn clean package
 ```
 
-The Spring Boot artifact is `backend/target/food-ordering-backend.jar`. The Function package is created under `function-app/target/azure-functions/food-ordering-function`.
+The Spring Boot artifact is `backend/target/food-ordering-backend.jar`. The Function package is created under `function-app/target/azure-functions/food-order-function`.
 
 ## Azure resources
 

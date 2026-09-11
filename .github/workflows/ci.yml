@@ -43,5 +43,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: azure-function-package
-          path: function-app/target/azure-functions/food-ordering-function
+          path: function-app/target/azure-functions/food-order-function
           if-no-files-found: error 

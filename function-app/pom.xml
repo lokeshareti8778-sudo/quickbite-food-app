@@ -48,7 +48,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <appName>food-ordering-function</appName>
+                    <appName>food-order-function</appName>
                     <resourceGroup>food-ordering-rg</resourceGroup>
                     <region>eastus</region>
                     <runtime>
