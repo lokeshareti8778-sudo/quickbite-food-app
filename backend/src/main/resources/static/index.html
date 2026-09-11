@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickBite | Food Ordering</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">QuickBite</a>
+    <button class="cart-link" id="cart-link" type="button">Cart <span id="cart-count">0</span></button>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div><p class="eyebrow">Fresh food, zero fuss</p><h1>Make tonight<br><em>delicious.</em></h1><p>Choose your favourites, add them to your cart, and we will get them to your door.</p><a class="button" href="#menu">Explore menu</a></div>
+      <div class="hero-image" aria-hidden="true"></div>
+    </section>
+
+    <section class="section" id="menu">
+      <div class="section-heading"><div><p class="eyebrow">The good stuff</p><h2>Pick your favourites</h2></div><div id="filters" class="filters"></div></div>
+      <div id="menu-grid" class="menu-grid"><p class="muted">Loading menu...</p></div>
+    </section>
+
+    <section class="checkout" id="checkout">
+      <div><p class="eyebrow">Almost there</p><h2>Your order,<br><em>your way.</em></h2><p class="checkout-copy">Add your details and we will confirm your order instantly.</p></div>
+      <div class="checkout-panel">
+        <div id="cart-items" class="cart-items"><p class="muted">Your cart is waiting for something tasty.</p></div>
+        <div class="total"><span>Total</span><strong id="cart-total">$0.00</strong></div>
+        <form id="order-form">
+          <div class="form-grid"><label>Customer name<input name="customerName" required placeholder="Alex Morgan"></label><label>Email<input type="email" name="email" required placeholder="alex@example.com"></label></div>
+          <label>Customer address<input name="address" required placeholder="42 Market Street"></label>
+          <label>Phone<input name="phone" required placeholder="+1 555 010 2040"></label>
+          <button class="button submit" type="submit">Place order <span>-></span></button>
+          <output id="form-message" class="message"></output>
+        </form>
+      </div>
+    </section>
+
+    <section id="confirmation" class="confirmation" hidden>
+      <p class="eyebrow">Order confirmed</p><h2>That is a <em>wrap.</em></h2><p id="confirmation-message"></p>
+      <div class="order-details"><span>Order ID<strong id="confirmation-id"></strong></span><span>Status<strong id="confirmation-status"></strong></span></div>
+      <a class="button light" href="#menu">Order again</a>
+    </section>
+  </main>
+  <footer>QuickBite <span>Fresh food for real life.</span></footer>
+  <script src="/script.js"></script>
+</body>
+</html>
