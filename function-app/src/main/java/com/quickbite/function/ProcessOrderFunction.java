@@ -11,7 +11,6 @@ import com.microsoft.azure.functions.annotation.FunctionName;
 import com.microsoft.azure.functions.annotation.HttpTrigger;
 
 import java.util.Map;
-import java.util.Optional;
 
 public class ProcessOrderFunction {
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -20,10 +19,12 @@ public class ProcessOrderFunction {
     @FunctionName("process-order")
     public HttpResponseMessage run(
             @HttpTrigger(name = "request", methods = {HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS)
-            HttpRequestMessage<Optional<String>> request,
+            HttpRequestMessage<String> request,
             final ExecutionContext context) {
         try {
-            String body = request.getBody().orElse("");
+            String body = request.getBody();
+            context.getLogger().info("Received order request body length: "
+                    + (body == null ? 0 : body.length()));
             Map<String, String> response = orderProcessor.process(body);
             return request.createResponseBuilder(HttpStatus.OK).header("Content-Type", "application/json").body(response).build();
         } catch (IllegalArgumentException exception) {
