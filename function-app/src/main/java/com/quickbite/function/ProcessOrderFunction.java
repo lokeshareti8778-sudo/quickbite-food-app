@@ -46,6 +46,7 @@ public class ProcessOrderFunction {
         } catch (IllegalArgumentException exception) {
 
             return request.createResponseBuilder(HttpStatus.BAD_REQUEST)
+                    .header("Content-Type", "application/json")
                     .body(Map.of("error", exception.getMessage()))
                     .build();
 
@@ -55,6 +56,7 @@ public class ProcessOrderFunction {
                     "Order processing failed: " + exception.getMessage());
 
             return request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .header("Content-Type", "application/json")
                     .body(Map.of("error", "Order could not be processed"))
                     .build();
         }
