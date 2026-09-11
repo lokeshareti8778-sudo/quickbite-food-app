@@ -1,0 +1,9 @@
+**/target/
+*.class
+*.log
+function-app/local.settings.json
+.idea/
+.vscode/settings.json
+*.iml
+.DS_Store
+Thumbs.db

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickBite | Fresh food, right on time</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#home"><span class="brand-mark">Q</span><span>QuickBite</span></a>
+    <nav aria-label="Main navigation"><a href="#menu">Menu</a><a href="#about">Our promise</a><button class="cart-link" id="cart-link">Cart <span id="cart-count">0</span></button></nav>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="hero-copy">
+        <p class="eyebrow">Good food. Zero fuss.</p>
+        <h1>Make tonight<br><em>delicious.</em></h1>
+        <p class="hero-text">Comfort food with a little more thought. Pick your favourites and we will get them to your door, hot and happy.</p>
+        <a class="primary-button" href="#menu">Explore the menu <span>↓</span></a>
+      </div>
+      <div class="hero-art" aria-label="A bowl of fresh food"></div>
+    </section>
+
+    <section class="menu-section" id="menu">
+      <div class="section-heading"><div><p class="eyebrow">The good stuff</p><h2>Made to be shared.<br><em>Or not.</em></h2></div><div class="filters" id="filters"></div></div>
+      <div class="menu-grid" id="menu-grid"><p class="loading">Loading the menu...</p></div>
+    </section>
+
+    <section class="checkout-section" id="checkout">
+      <div class="checkout-intro"><p class="eyebrow">Almost there</p><h2>Your order,<br><em>your way.</em></h2><p>Tell us where to bring the good stuff. Your order will be confirmed in seconds.</p></div>
+      <div class="checkout-panel">
+        <div id="cart-items" class="cart-items"><p class="empty-cart">Your cart is waiting for something tasty.</p></div>
+        <div class="total-row"><span>Total</span><strong id="cart-total">$0.00</strong></div>
+        <form id="order-form">
+          <div class="form-grid"><label>Full name<input name="customerName" required placeholder="Alex Morgan"></label><label>Email<input type="email" name="email" required placeholder="alex@example.com"></label></div>
+          <div class="form-grid"><label>Phone<input name="phone" required placeholder="+1 555 010 2040"></label><label>Delivery address<input name="address" required placeholder="42 Market Street"></label></div>
+          <button class="primary-button full-width" type="submit">Place my order <span>→</span></button>
+        </form>
+        <output class="form-message" id="form-message"></output>
+      </div>
+    </section>
+
+    <section class="confirmation" id="confirmation" hidden><p class="eyebrow">Order confirmed</p><div class="confirmation-mark">✓</div><h2>That is a <em>wrap.</em></h2><p id="confirmation-message"></p><div class="order-meta"><span>Order ID <strong id="confirmation-id"></strong></span><span>Status <strong id="confirmation-status"></strong></span></div><a class="secondary-button" href="#menu">Order something else</a></section>
+    <section class="promise" id="about"><p class="eyebrow">Why QuickBite</p><h2>Thoughtful food,<br><em>made easy.</em></h2><div class="promise-list"><span><b>01</b> Carefully sourced ingredients</span><span><b>02</b> Fast, friendly delivery</span><span><b>03</b> No shortcuts on flavour</span></div></section>
+  </main>
+  <footer><span>QuickBite</span><span>Fresh food for real life.</span></footer>
+  <script src="script.js"></script>
+</body>
+</html>
