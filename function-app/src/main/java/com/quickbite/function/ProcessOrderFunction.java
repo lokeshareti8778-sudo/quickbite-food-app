@@ -22,7 +22,8 @@ public class ProcessOrderFunction {
             @HttpTrigger(
                     name = "request",
                     methods = {HttpMethod.POST},
-                    authLevel = AuthorizationLevel.ANONYMOUS)
+                    authLevel = AuthorizationLevel.ANONYMOUS,
+                    dataType = "string")
             HttpRequestMessage<String> request,
             final ExecutionContext context) {
 
